@@ -1,0 +1,9 @@
+{
+  "name": "gold-rwa-poc",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node server.mjs",
+    "test": "node tests/core.test.js"
+  }
+}

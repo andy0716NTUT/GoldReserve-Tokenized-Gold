@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GoldReserve RWA Admin</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Sepolia Admin Console</p>
+        <h1>GoldReserve 管理者頁面</h1>
+      </div>
+      <nav class="nav-actions" aria-label="Admin navigation">
+        <a class="text-link" href="./index.html">返回投資人頁</a>
+        <button id="connectBtn" class="command primary">連接 MetaMask</button>
+      </nav>
+    </header>
+
+    <main>
+      <section class="admin-hero">
+        <div>
+          <p class="eyebrow">Contract</p>
+          <h2>Sepolia 鏈上操作台</h2>
+          <p class="lede">操作順序：連接 MetaMask → 更新儲備證明 → 加入白名單 → 發行 GGT。</p>
+        </div>
+        <div class="contract-card">
+          <span>合約地址</span>
+          <code id="contractAddress">-</code>
+          <a id="etherscanLink" class="text-link" target="_blank" rel="noreferrer">Sepolia Etherscan</a>
+        </div>
+      </section>
+
+      <section class="metrics" aria-label="Onchain contract metrics">
+        <article class="metric">
+          <span>目前錢包</span>
+          <strong id="walletAddress">未連接</strong>
+          <small id="walletRole">請先連接 MetaMask</small>
+        </article>
+        <article class="metric">
+          <span>審計黃金儲備</span>
+          <strong id="chainReserve">-</strong>
+          <small>reserveGrams()</small>
+        </article>
+        <article class="metric">
+          <span>GGT 已發行</span>
+          <strong id="chainSupply">-</strong>
+          <small>totalSupply()</small>
+        </article>
+        <article class="metric">
+          <span>合約狀態</span>
+          <strong id="chainPaused">-</strong>
+          <small id="chainCoverage">-</small>
+        </article>
+      </section>
+
+      <section class="workspace admin-grid">
+        <div class="panel controls wide-panel">
+          <div class="panel-head">
+            <p class="eyebrow">Subscription Queue</p>
+            <h3>0. 使用者申購申請</h3>
+          </div>
+          <div class="info-note">
+            使用者送出認購申請後，管理者可在這裡直接審核並發行；系統會自動帶入地址與數量，並在需要時先加入白名單。連接 MetaMask 後，頁面也會即時監聽鏈上發行與贖回事件。
+          </div>
+          <div class="button-grid">
+            <button id="refreshRequestsBtn" class="command primary">重新整理申請</button>
+            <button id="clearProcessedBtn" class="command">清除已處理</button>
+          </div>
+          <div class="request-list" id="subscriptionRequests"></div>
+        </div>
+
+        <div class="panel controls">
+          <div class="panel-head">
+            <p class="eyebrow">Auditor / Owner</p>
+            <h3>1. 更新儲備證明</h3>
+          </div>
+          <label class="field">
+            <span>新的審計黃金儲備（克）</span>
+            <input id="proofReserveInput" type="number" min="0" step="1" value="125000">
+          </label>
+          <label class="field">
+            <span>證明摘要資料（會轉成 proof hash）</span>
+            <textarea id="proofNoteInput" rows="5">臺灣保管黃金儲備報告，日期 2026-06-01。</textarea>
+          </label>
+          <button id="updateProofBtn" class="command primary">更新 Proof Hash</button>
+        </div>
+
+        <div class="panel controls">
+          <div class="panel-head">
+            <p class="eyebrow">Owner</p>
+            <h3>2. 白名單與凍結</h3>
+          </div>
+          <label class="field">
+            <span>要管理的帳戶地址</span>
+            <input id="controlAddressInput" class="mono-input" placeholder="0x...">
+          </label>
+          <div class="button-grid">
+            <button id="allowBtn" class="command primary">加入白名單</button>
+            <button id="denyBtn" class="command danger">移出白名單</button>
+            <button id="freezeBtn" class="command danger">凍結帳戶</button>
+            <button id="unfreezeBtn" class="command">解除凍結</button>
+          </div>
+        </div>
+
+        <div class="panel controls">
+          <div class="panel-head">
+            <p class="eyebrow">Issuer / Owner</p>
+            <h3>3. 發行 GGT</h3>
+          </div>
+          <label class="field">
+            <span>收款投資人地址</span>
+            <input id="mintToInput" class="mono-input" placeholder="0x...">
+          </label>
+          <label class="field">
+            <span>發行數量（GGT / 克）</span>
+            <input id="mintAmountInput" type="number" min="1" step="1" value="100">
+          </label>
+          <button id="mintBtn" class="command">發行給投資人</button>
+        </div>
+
+        <div class="panel controls">
+          <div class="panel-head">
+            <p class="eyebrow">Owner</p>
+            <h3>4. 緊急暫停</h3>
+          </div>
+          <div class="button-grid">
+            <button id="pauseBtn" class="command danger">暫停合約</button>
+            <button id="unpauseBtn" class="command primary">恢復合約</button>
+          </div>
+          <div class="proof-box light">
+            <span>Latest Proof Hash</span>
+            <code id="chainProofHash">-</code>
+          </div>
+        </div>
+      </section>
+
+      <section class="events">
+        <div class="panel-head">
+          <p class="eyebrow">Transaction Log</p>
+          <h3>管理操作紀錄</h3>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Action</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody id="adminLog"></tbody>
+        </table>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.14.0/dist/ethers.umd.min.js"></script>
+    <script src="./config.js"></script>
+    <script src="./wallet.js"></script>
+    <script src="./requests.js"></script>
+    <script src="./admin.js"></script>
+  </body>
+</html>
